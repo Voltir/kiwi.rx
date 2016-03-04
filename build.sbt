@@ -5,10 +5,11 @@ val kiwirx = crossProject.settings(
   scalaVersion := "2.11.7",
   organization := "com.stabletechs",
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  addCompilerPlugin("com.lihaoyi" %% "acyclic" % "0.1.3"),
+  addCompilerPlugin("com.lihaoyi" %% "acyclic" % "0.1.4"),
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalarx" % "0.3.1",
-    "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
+    "com.lihaoyi" %%% "utest" % "0.3.1" % "test",
+    "com.lihaoyi" %% "acyclic" % "0.1.4" % "provided"
   ),
   scmInfo := Some(ScmInfo(
     url("https://github.com/Voltir/kiwi.rx"),
