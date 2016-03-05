@@ -1,10 +1,13 @@
 package kiwirx
 
 import collection.{mutable => m}
+import rx._
 
 class Solver {
 
-  class Tag(var marker: Symbol = Symbol(), var other: Symbol = Symbol())
+  class Tag(var marker: Symbol = Symbol(), var other: Symbol = Symbol()) {
+    override def toString = s"Tag(marker = $marker, other = $other)"
+  }
 
   object Tag {
     def apply(): Tag = new Tag()
@@ -12,18 +15,22 @@ class Solver {
 
   private val cns: m.Map[Constraint,Tag] = m.LinkedHashMap.empty
   private val rows: m.Map[Symbol,Row] = m.LinkedHashMap.empty
+  private val vars: m.Map[Var[Double],Symbol] = m.LinkedHashMap.empty
+
   private val infeasibleRows = m.Buffer.empty[Symbol]
 
   private val objective: Row = Row()
   private var artificial = Option.empty[Row]
 
   def addConstraint(constraint: Constraint): Unit = {
+    println("=== add constraint ===")
     require(!cns.contains(constraint),"Duplicate Constraint!")
 
     val tag = Tag()
     val row = createRow(constraint,tag)
     var subject = chooseSubject(row,tag)
 
+    println("Subject: " + subject)
     if(subject.t == Symbol.INVALID && allDummies(row)) {
       if(!Util.nearZero(row.constant)) throw new Exception("TODO: UnsatisfiableConstraintException")
       else subject = tag.marker
@@ -41,6 +48,7 @@ class Solver {
 
     //if
     //else
+    println("???")
     row.solveFor(subject)
     substitute(subject,row)
     rows.put(subject,row)
@@ -50,11 +58,20 @@ class Solver {
     optimize(objective)
   }
 
+  def updateVariables(): Unit = {
+    vars.foreach { case (v, sym) =>
+      rows.get(sym).fold(v() = 0.0)(row => v() = row.constant)
+    }
+  }
 
   private def createRow(constraint: Constraint, tag: Tag): Row = {
     val row = Row(constraint.expr.constant)
-    constraint.expr.terms.view.filter(t => Util.nearZero(t.coefficient)).foreach { t =>
-      val sym = getVarSymbol(42)
+
+    println("=== CREATE ROW START ===")
+    println(row)
+    constraint.expr.terms.view.filter(t => !Util.nearZero(t.coefficient)).foreach { t =>
+      val sym = getVarSymbol(t.variable)
+      require(vars.contains(t.variable),"Post Condition Error!")
       rows.get(sym).fold(row.insert(sym,t.coefficient))(other => row.insert(other,t.coefficient))
     }
     //      case OP_EQ: {
@@ -76,11 +93,14 @@ class Solver {
     //      }
     val dummy = Symbol(Symbol.DUMMY)
     tag.marker = dummy
+    println(tag)
     row.insert(dummy)
+    println("---")
+    println(row)
     row
   }
 
-  def optimize(objective: Row): Unit = {
+  private def optimize(objective: Row): Unit = {
     println("=== OPTIMIZE ====")
     while(true) {
       println("= ITERATION! =")
@@ -156,9 +176,13 @@ class Solver {
     }
   }
 
-  private def getVarSymbol(todo: Int): Symbol = {
-    //TODO
-    Symbol(Symbol.EXTERNAL)
+  private def getVarSymbol(variable: Var[Double]): Symbol = {
+    vars.getOrElse(variable,{
+      val sym = Symbol(Symbol.EXTERNAL)
+      vars.put(variable,sym)
+      sym
+    })
+
   }
 
   private def substitute(sym: Symbol, row: Row): Unit = {

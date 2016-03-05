@@ -1,4 +1,7 @@
 package kiwirx
+
+import rx._
+
 import collection.{mutable => m}
 
 object Symbolics {
@@ -10,6 +13,10 @@ object Symbolics {
 
   def add(first: Term, second: Double): Expression = {
     Expression(first,second)
+  }
+
+  def add(first: Var[Double], constant: Double): Expression = {
+    add(new Term(first),constant)
   }
 
   def multiply(term: Term, coefficient: Double): Term = {

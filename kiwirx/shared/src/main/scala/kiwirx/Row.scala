@@ -55,6 +55,10 @@ class Row(var constant: Double, var cells: m.Map[Symbol,Double]) {
       insert(row,coeff)
     }
   }
+
+  override def toString(): String = {
+    s"Row($constant, $cells)"
+  }
 }
 
 object Row {

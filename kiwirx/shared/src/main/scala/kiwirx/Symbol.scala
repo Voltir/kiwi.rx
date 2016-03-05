@@ -2,7 +2,9 @@ package kiwirx
 
 
 
-class Symbol(val t: Symbol.SymbolType)
+class Symbol(val t: Symbol.SymbolType) {
+  override def toString(): String = s"Symbol($t)"
+}
 
 object Symbol {
   sealed trait SymbolType

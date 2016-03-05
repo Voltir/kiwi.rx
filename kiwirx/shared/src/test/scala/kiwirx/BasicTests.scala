@@ -37,7 +37,14 @@ object BasicTests extends TestSuite {
     'simple1 {
       val solver = new Solver()
       val x = Var(0.0)
-      solver.addConstraint(Symbolics.equals(Symbolics.add(x.2),20))
+      solver.addConstraint(Symbolics.equals(Symbolics.add(x,2),20))
+
+      solver.updateVariables()
+
+      println(x.now)
+      println(x.now)
+      println(x.now)
+      println(x.now)
       //solver.addConstraint(Equals(Add(x,2),20.0))
     }
   }
