@@ -39,7 +39,31 @@ object BasicTests extends TestSuite {
       val x = Var(0.0)
       solver.addConstraint(Symbolics.equals(Symbolics.add(x,2),20))
       solver.updateVariables() //todo - not this
-      x.now ~= 18
+      assert(x.now ~== 18)
+    }
+
+    'simple0 {
+      val solver = new Solver()
+      val x = Var(0.0)
+      solver.addConstraint(Symbolics.equals(x,10))
+      solver.updateVariables() //todo - not this
+      println(x.now)
+      assert(x.now ~== 10)
+    }
+
+    'simpleVar {
+      val solver = new Solver()
+      val x = Var(0.0)
+      val y = Var(10.0)
+      def debug() = println(s"$x $y (${x.now * 2} == ${y.now})?")
+      solver.addConstraint(Symbolics.equals(Symbolics.multiply(x,2),y))
+      solver.updateVariables() //todo - not this
+      debug()
+      println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+      solver.addConstraint(Symbolics.equals(y,10))
+      solver.updateVariables() //todo - not this
+      debug()
+      println("???????????")
     }
   }
 }
