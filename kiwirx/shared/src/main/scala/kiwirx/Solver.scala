@@ -52,8 +52,8 @@ class Solver {
 
 
   private def createRow(constraint: Constraint, tag: Tag): Row = {
-    val row = Row(constraint.expression.constant)
-    constraint.expression.terms.view.filter(t => Util.nearZero(t.coefficient)).foreach { t =>
+    val row = Row(constraint.expr.constant)
+    constraint.expr.terms.view.filter(t => Util.nearZero(t.coefficient)).foreach { t =>
       val sym = getVarSymbol(42)
       rows.get(sym).fold(row.insert(sym,t.coefficient))(other => row.insert(other,t.coefficient))
     }

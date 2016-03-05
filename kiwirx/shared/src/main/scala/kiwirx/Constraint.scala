@@ -1,10 +1,7 @@
 package kiwirx
 
-class Constraint(val expression: Expression, strength: Double) {
+class Constraint(val expr: Expression, val str: Strength)
 
-  //private val expression: Expression = ???
-
-  //private val strength: Double = ???
-
-
+object Constraint {
+  def apply(expr: Expression) = new Constraint(expr,Strength.REQUIRED)
 }
