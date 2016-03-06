@@ -54,10 +54,11 @@ class Solver {
 
     optimize(objective)
     println("\n-- " + rows.mkString("\n-- "))
-    rows.foreach { case (v,c) =>
-      //require(c.cells.isEmpty,"Cells should all be empty!")
-      v() = c.constant + c.cells.foldLeft(0.0)((acc,r) => acc + r._1.now * r._2)
-    }
+
+    //Update vars after new constraint is added
+    Var.set(rows.iterator.map { case (v,c) =>
+      v -> (c.constant + c.cells.foldLeft(0.0)((acc,r) => acc + r._1.now * r._2))
+    }.toSeq:_*)
 
     println("DONE!\n\n")
   }
