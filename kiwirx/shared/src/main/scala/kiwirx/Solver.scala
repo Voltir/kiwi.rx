@@ -5,17 +5,8 @@ import rx._
 
 class Solver {
 
-  class Tag(var marker: Symbol = Symbol(), var other: Symbol = Symbol()) {
-    override def toString = s"Tag(marker = $marker, other = $other)"
-  }
-
-  object Tag {
-    def apply(): Tag = new Tag()
-  }
-
-  private val cns: m.Map[Constraint,Tag] = m.LinkedHashMap.empty
-  private val rows: m.Map[Symbol,Row] = m.LinkedHashMap.empty
-  private val vars: m.Map[Var[Double],Symbol] = m.LinkedHashMap.empty
+  private val cns: m.Set[Constraint] = m.Set.empty
+  private val rows: m.Map[Var[Double],Row] = m.LinkedHashMap.empty
 
   private val infeasibleRows = m.Buffer.empty[Symbol]
 
@@ -26,15 +17,15 @@ class Solver {
     println("=== add constraint ===")
     require(!cns.contains(constraint),"Duplicate Constraint!")
 
-    val tag = Tag()
-    val row = createRow(constraint,tag)
-    var subject = chooseSubject(row,tag)
+    val row = createRow(constraint)
 
+    var subject = chooseSubject(row)
+    println("Row: " + row)
     println("Subject: " + subject)
-    if(subject.t == Symbol.INVALID && allDummies(row)) {
-      if(!Util.nearZero(row.constant)) throw new Exception("TODO: UnsatisfiableConstraintException")
-      else subject = tag.marker
-    }
+//    if(subject.t == Symbol.INVALID && allDummies(row)) {
+//      if(!Util.nearZero(row.constant)) throw new Exception("TODO: UnsatisfiableConstraintException")
+//      else subject = tag.marker
+//    }
 
 //    if (subject.getType() == Symbol.Type.INVALID) {
 //      if (!addWithArtificialVariable(row)) {
@@ -50,29 +41,36 @@ class Solver {
     //else
     println("???")
     row.solveFor(subject)
+    println("Row (After Solve): ")
+    println(row)
+
     substitute(subject,row)
+    println("Row (After Substitute): ")
+    println(row)
+
     rows.put(subject,row)
     ///
-    cns.put(constraint,tag)
+    cns.add(constraint)
 
     optimize(objective)
-  }
-
-  def updateVariables(): Unit = {
-    vars.foreach { case (v, sym) =>
-      rows.get(sym).fold(v() = 0.0)(row => v() = row.constant)
+    println("\n-- " + rows.mkString("\n-- "))
+    rows.foreach { case (v,c) =>
+      //require(c.cells.isEmpty,"Cells should all be empty!")
+      v() = c.constant + c.cells.foldLeft(0.0)((acc,r) => acc + r._1.now * r._2)
     }
+
+    println("DONE!\n\n")
   }
 
-  private def createRow(constraint: Constraint, tag: Tag): Row = {
+
+  private def createRow(constraint: Constraint): Row = {
     val row = Row(constraint.expr.constant)
 
     println("=== CREATE ROW START ===")
     println(row)
     constraint.expr.terms.view.filter(t => !Util.nearZero(t.coefficient)).foreach { t =>
-      val sym = getVarSymbol(t.variable)
-      require(vars.contains(t.variable),"Post Condition Error!")
-      rows.get(sym).fold(row.insert(sym,t.coefficient))(other => row.insert(other,t.coefficient))
+      println("Checking..." + t)
+      rows.get(t.variable).fold(row.insert(t.variable,t.coefficient))(other => row.insert(other,t.coefficient))
     }
     //      case OP_EQ: {
     //        if (constraint.getStrength() < Strength.REQUIRED) {
@@ -91,12 +89,6 @@ class Solver {
     //      }
     //        break;
     //      }
-    val dummy = Symbol(Symbol.DUMMY)
-    tag.marker = dummy
-    println(tag)
-    row.insert(dummy)
-    println("---")
-    println(row)
     row
   }
 
@@ -104,41 +96,52 @@ class Solver {
     println("=== OPTIMIZE ====")
     while(true) {
       println("= ITERATION! =")
-      val entering = getEnteringSymbol(objective)
-      if(entering.t == Symbol.INVALID) return
+      //val entering = getEnteringSymbol(objective)
+      //if(entering.t == Symbol.INVALID) return
 
+
+      val maybeEntering = getEnteringVar(objective)
+      if(maybeEntering.isEmpty) return
+
+      val entering = maybeEntering.get
       val entry = getLeavingRow(entering)
 
-      var leaving: Symbol = null
-      rows.keysIterator.filter(_ == entry).foreach { key =>
-        println("Optimize (leaving)?  " + key)
-        leaving = key
+      var leaving: Var[Double] = null
+      rows.filter(_._2 == entry).foreach { wat =>
+        println("Optimize (leaving)?  " + wat)
+        leaving = wat._1
       }
+//
+//      var entryKey: Symbol = null
+//      rows.keysIterator.filter(_ == entry).foreach { key =>
+//        println("Optimize (entryKey)?  " + key)
+//        entryKey = key
+//      }
 
-      var entryKey: Symbol = null
-      rows.keysIterator.filter(_ == entry).foreach { key =>
-        println("Optimize (entryKey)?  " + key)
-        entryKey = key
-      }
-
-      require(entryKey != null,"entryKey was null?")
-      require(leaving != null,"leaving was null?")
-      rows.remove(entryKey)
+      //require(entryKey != null,"entryKey was null?")
+      //require(leaving != null,"leaving was null?")
+      rows.remove(entering)
       entry.solveFor(leaving,entering)
       substitute(entering,entry)
       rows.put(entering,entry)
+      println("Set here??")
     }
   }
 
-  private def getEnteringSymbol(objective: Row): Symbol = {
-    objective.cells.find { case (k,v) => k.t == Symbol.DUMMY && v < 0.0 }.fold(Symbol())(_._1)
+  private def getEnteringVar(objective: Row): Option[Var[Double]] = {
+    objective.cells.find { case (k,v) => v < 0.0 }.map(_._1)
   }
 
+  //private def getEnteringSymbol(objective: Row): Symbol = {
+  //  objective.cells.find { case (k,v) => k.t == Symbol.DUMMY && v < 0.0 }.fold(Symbol())(_._1)
+  //}
+
   //TODO - Option[Row] ???
-  private def getLeavingRow(entering: Symbol): Row = {
+  private def getLeavingRow(entering: Var[Double]): Row = {
     var ratio: Double = Double.MaxValue
     var row: Row = null
-    rows.keysIterator.filter(_.t != Symbol.EXTERNAL).foreach { key =>
+    //rows.keysIterator.filter(_.t != Symbol.EXTERNAL).foreach { key =>
+    rows.keysIterator.foreach { key =>
       val candidate = rows(key)
       val temp = candidate.coefficientFor(entering)
       if(temp < 0.0) {
@@ -149,6 +152,7 @@ class Solver {
         }
       }
     }
+    require(row != null,"getLeavingRow -- NO ROW FOUND!?")
     row
   }
 
@@ -163,8 +167,8 @@ class Solver {
     * 2) A negative slack or error tag variable.
     * If a subject cannot be found, an invalid symbol will be returned.
     */
-  private def chooseSubject(row: Row, tag: Tag): Symbol = {
-    require(tag.other != null,"chooseSubject: tag.other was null?")
+  private def chooseSubject(row: Row): Var[Double] = {
+/*    require(tag.other != null,"chooseSubject: tag.other was null?")
     row.cells.keysIterator.find(_.t == Symbol.EXTERNAL).getOrElse {
       if(tag.marker.t == Symbol.SLACK || tag.marker.t == Symbol.ERROR && row.coefficientFor(tag.marker) < 0.0) {
         tag.marker
@@ -173,28 +177,20 @@ class Solver {
       } else {
         Symbol()
       }
-    }
+    }*/
+
+    row.cells.keys.head
   }
 
-  private def getVarSymbol(variable: Var[Double]): Symbol = {
-    vars.getOrElse(variable,{
-      val sym = Symbol(Symbol.EXTERNAL)
-      vars.put(variable,sym)
-      sym
-    })
-
-  }
-
-  private def substitute(sym: Symbol, row: Row): Unit = {
+  private def substitute(v: Var[Double], row: Row): Unit = {
     rows.foreach { case (key,entry) =>
-      entry.substitute(sym,row)
-      if(key.t != Symbol.EXTERNAL && entry.constant < 0.0) {
-        infeasibleRows.append(key)
-      }
+      entry.substitute(v,row)
+      //if(key.t != Symbol.EXTERNAL && entry.constant < 0.0) {
+      //  infeasibleRows.append(key)
+      //}
     }
-    objective.substitute(sym,row)
-    artificial.foreach(_.substitute(sym,row))
+    objective.substitute(v,row)
+    artificial.foreach(_.substitute(v,row))
   }
 
-  private def allDummies(row: Row): Boolean = row.cells.keysIterator.forall(_.t == Symbol.DUMMY)
 }

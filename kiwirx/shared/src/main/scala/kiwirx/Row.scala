@@ -1,21 +1,22 @@
 package kiwirx
 
+import rx._
 import collection.{mutable => m}
 
-class Row(var constant: Double, var cells: m.Map[Symbol,Double]) {
+class Row(var constant: Double, val cells: m.Map[Var[Double],Double]) {
 
   def add(value: Double): Double = {
     constant += value
     constant
   }
 
-  def insert(sym: Symbol, coefficient: Double): Unit = {
-    val next = cells.get(sym).fold(coefficient)(_ + coefficient)
-    if(Util.nearZero(next)) cells.remove(sym)
-    else cells.put(sym,next)
+  def insert(v: Var[Double], coefficient: Double): Unit = {
+    val next = cells.get(v).fold(coefficient)(_ + coefficient)
+    if(Util.nearZero(next)) cells.remove(v)
+    else cells.put(v,next)
   }
 
-  def insert(sym: Symbol): Unit = insert(sym,-1.0)
+  def insert(v: Var[Double]): Unit = insert(v,-1.0)
 
   def insert(other: Row, coefficient: Double): Unit = {
     constant += other.constant * coefficient
@@ -32,32 +33,33 @@ class Row(var constant: Double, var cells: m.Map[Symbol,Double]) {
     }
   }
 
-  def solveFor(sym: Symbol): Unit = {
-    require(cells.contains(sym),"solveFor -- sym not in cells!")
-    val coeff = -1.0 / cells(sym)
-    cells.remove(sym)
+  def solveFor(v: Var[Double]): Unit = {
+    require(cells.contains(v),"solveFor -- sym not in cells!")
+    val coeff = -1.0 / cells(v)
+    cells.remove(v)
     constant *= coeff
-    val newCells = m.LinkedHashMap.empty[Symbol,Double]
-    cells.foreach { case (k,v) => newCells.put(k,v*coeff) }
-    cells = newCells
+    //val newCells = m.LinkedHashMap.empty[Symbol,Double]
+    //cells.foreach { case (k,v) => newCells.put(k,v*coeff) }
+    //cells = newCells
+    cells.foreach { case (k,v) => cells.put(k,v*coeff) }
   }
 
-  def solveFor(lhs: Symbol, rhs: Symbol): Unit = {
+  def solveFor(lhs: Var[Double], rhs: Var[Double]): Unit = {
     insert(lhs,-1.0)
     solveFor(rhs)
   }
 
-  def coefficientFor(sym: Symbol): Double = cells.getOrElse(sym,0.0)
+  def coefficientFor(v: Var[Double]): Double = cells.getOrElse(v,0.0)
 
-  def substitute(sym: Symbol, row: Row): Unit = {
-    cells.get(sym).foreach { coeff =>
-      cells.remove(sym)
+  def substitute(v: Var[Double], row: Row): Unit = {
+    cells.get(v).foreach { coeff =>
+      cells.remove(v)
       insert(row,coeff)
     }
   }
 
   override def toString(): String = {
-    s"Row($constant, $cells)"
+    s"Row($constant, ${cells.toMap})"
   }
 }
 
