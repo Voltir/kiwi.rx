@@ -37,7 +37,7 @@ object Symbolics {
   def subtract(first: Expression, second: Expression): Expression = add(first,negate(second))
 
   def equals(first: Expression, second: Expression): Constraint = {
-    Constraint(subtract(first,second))
+    Constraint(subtract(first,second),Constraint.EQ)
   }
 
   def equals(expr: Expression, constant: Double): Constraint = {
@@ -50,5 +50,13 @@ object Symbolics {
 
   def equals(v: Var[Double], c: Double): Constraint = {
     equals(Expression(Term(v),0.0),Expression(c))
+  }
+
+  def greaterOrEqual(first: Expression, second: Expression): Constraint = {
+    Constraint(subtract(first,second),Constraint.GE)
+  }
+
+  def greaterOrEqual(v: Var[Double], c: Double): Constraint = {
+    greaterOrEqual(Expression(Term(v,1.0),0.0),Expression(c))
   }
 }

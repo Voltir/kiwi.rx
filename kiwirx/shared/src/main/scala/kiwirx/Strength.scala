@@ -1,7 +1,9 @@
 package kiwirx
 
 
-case class Strength(value: Double) extends AnyVal
+case class Strength(value: Double) extends AnyVal with Ordered[Strength] {
+  def compare(other: Strength): Int = value.compare(other.value)
+}
 
 object Strength {
 
