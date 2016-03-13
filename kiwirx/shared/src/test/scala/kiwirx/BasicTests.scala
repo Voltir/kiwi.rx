@@ -33,10 +33,14 @@ object BasicTests extends TestSuite {
       solver.addConstraint(Symbolics.equals(Symbolics.multiply(x,2),y))
       debug()
       println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-      solver.addConstraint(Symbolics.equals(y,10))
-      debug()
+      //solver.addConstraint(Symbolics.equals(y,10))
+      //debug()
       //solver.addConstraint(Symbolics.equals(x,10)) -- throws an exception currently
       //debug()
+      x() = 5
+      debug()
+      y() = 100
+      debug()
     }
 
     'ge0 {

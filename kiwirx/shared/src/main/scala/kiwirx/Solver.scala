@@ -7,8 +7,11 @@ class Solver {
 
   class Tag(var marker: Option[Variable] = None, var other: Option[Variable] = None)
 
-  private val cns: m.Set[Constraint] = m.Set.empty
+  class EditInfo(val constraint: Constraint, val tag: Tag, var constant: Double)
+
+  private val cns: m.Map[Constraint,Tag] = m.LinkedHashMap.empty
   private val rows: m.Map[Variable,Row] = m.LinkedHashMap.empty
+  private val edits: m.Map[Var[Double],EditInfo] = m.LinkedHashMap.empty
 
   //private val infeasibleRows = m.Buffer.empty[Symbol]
 
@@ -31,7 +34,7 @@ class Solver {
     rows.put(subject,row)
 
     ////
-    cns.add(constraint)
+    cns.put(constraint,tag)
 
     println("--BEFORE OPTIMIZE--")
     println(rows)
@@ -49,7 +52,6 @@ class Solver {
         None
     }.toSeq:_*)
   }
-
 
   private def createRow(constraint: Constraint, tag: Tag): Row = {
     val row = Row(constraint.expr.constant)
