@@ -20,6 +20,7 @@ class Solver {
 
   def addConstraint(constraint: Constraint): Unit = {
     println("==== ADD CONSTRAINT START ====")
+    println(constraint)
     require(!cns.contains(constraint),"Duplicate Constraint!")
 
     val tag = new Tag()
@@ -56,10 +57,11 @@ class Solver {
   private def createRow(constraint: Constraint, tag: Tag): Row = {
     val row = Row(constraint.expr.constant)
     constraint.expr.terms.view.filter(t => !Util.nearZero(t.coefficient)).foreach { t =>
+      println("This is: " + t.coefficient)
       rows.get(t.variable)
           .fold(row.insert(t.variable,t.coefficient))(other => { row.insert(other,t.coefficient)})
     }
-    println("AA? " + row)
+    println("createRow? " + row)
     constraint.op match {
       case Constraint.LE | Constraint.GE =>
         val coeff = if(constraint.op == Constraint.LE) 1.0 else -1.0
@@ -204,7 +206,7 @@ class Solver {
     rows.foreach { case (key,entry) =>
       entry.substitute(v,row)
       if(!key.isInstanceOf[External] && entry.constant < 0.0) {
-        assert(false,"Found infesiable entry!?")
+        assert(false,"Found infeasible entry!?")
       }
       //if(key.t != Symbol.EXTERNAL && entry.constant < 0.0) {
       //  infeasibleRows.append(key)

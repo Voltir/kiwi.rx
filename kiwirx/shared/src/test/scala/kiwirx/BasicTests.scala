@@ -1,6 +1,7 @@
 package kiwirx
 
 import Symbolics._
+import kiwirx2.TestSolver1
 import rx._
 import utest._
 import acyclic.file
@@ -33,13 +34,24 @@ object BasicTests extends TestSuite {
       solver.addConstraint(Symbolics.equals(Symbolics.multiply(x,2),y))
       debug()
       println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-      //solver.addConstraint(Symbolics.equals(y,10))
-      //debug()
+      solver.addConstraint(Symbolics.equals(x,10))
+      debug()
       //solver.addConstraint(Symbolics.equals(x,10)) -- throws an exception currently
       //debug()
-      x() = 5
+      //x() = 5
+      //debug()
+      //y() = 100
+      //debug()
+    }
+
+    'hacky {
+      val wurt = new TestSolver1
+      val x = Var(0.0)
+      val y = Var(18.0)
+      def debug() = println(s"$x $y (${x.now * 2} == ${y.now})?")
+      wurt.addConstraintTest(x,y)
       debug()
-      y() = 100
+      x() = 21
       debug()
     }
 
