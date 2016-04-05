@@ -15,7 +15,7 @@ object BasicTests extends TestSuite {
       import kiwirx2.internal._
 
       var count = 0
-      val latch = new RxLatch({ () =>
+      val latch = new VarLatch[Int]({ yay =>
         count += 1
       })
 
@@ -31,7 +31,7 @@ object BasicTests extends TestSuite {
       latch.include(b)
       a() = 1
 
-      latch.include(c)
+      //latch.include(c)
       b() = 2
 
 
@@ -50,7 +50,7 @@ object BasicTests extends TestSuite {
 
       assert(count == 2)
       latch.include(e)
-      latch.include(d)
+      //latch.include(d)
       a() = 10
 
 
@@ -100,11 +100,11 @@ object BasicTests extends TestSuite {
       solver.addConstraint(Symbolics.equals(x,10))
       debug()
       //solver.addConstraint(Symbolics.equals(x,10)) -- throws an exception currently
-      //debug()
-      //x() = 5
-      //debug()
-      //y() = 100
-      //debug()
+      debug()
+      x() = 5
+      debug()
+      y() = 100
+      debug()
     }
 
     'hacky {
@@ -115,6 +115,10 @@ object BasicTests extends TestSuite {
       wurt.addConstraintTest(x,y)
       debug()
       x() = 21
+      debug()
+      x() = 10
+      debug()
+      x() = 50
       debug()
     }
 
