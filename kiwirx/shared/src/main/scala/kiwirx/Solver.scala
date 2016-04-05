@@ -7,16 +7,10 @@ class Solver {
 
   class Tag(var marker: Option[Variable] = None, var other: Option[Variable] = None)
 
-  class EditInfo(val constraint: Constraint, val tag: Tag, var constant: Double)
-
   private val cns: m.Map[Constraint,Tag] = m.LinkedHashMap.empty
   private val rows: m.Map[Variable,Row] = m.LinkedHashMap.empty
-  private val edits: m.Map[Var[Double],EditInfo] = m.LinkedHashMap.empty
-
-  //private val infeasibleRows = m.Buffer.empty[Symbol]
 
   private val objective: Row = Row()
-  //private var artificial = Option.empty[Row]
 
   def addConstraint(constraint: Constraint): Unit = {
     println("==== ADD CONSTRAINT START ====")
@@ -117,15 +111,6 @@ class Solver {
       rows.filter(_._2 == entry).foreach { wat =>
         leaving = wat._1
       }
-//
-//      var entryKey: Symbol = null
-//      rows.keysIterator.filter(_ == entry).foreach { key =>
-//        println("Optimize (entryKey)?  " + key)
-//        entryKey = key
-//      }
-
-      //require(entryKey != null,"entryKey was null?")
-      //require(leaving != null,"leaving was null?")
       rows.remove(entering)
       entry.solveFor(leaving,entering)
       substitute(entering,entry)
