@@ -9,11 +9,13 @@ case class Ext(v: Var[Double]) extends AnyVal with Variable1
 case class Coefficient(value: Double) extends AnyVal {
   def *(other: Coefficient): Coefficient = Coefficient(value * other.value)
   def +(other: Coefficient): Coefficient = Coefficient(value + other.value)
+  def unary_- = Coefficient(-value)
   def nearZero: Boolean = if(value < 0.0) -value < EPS else value < EPS
 }
 
 object implicits {
   implicit class CoefficientExt(val inp: Double) extends AnyVal {
+    def coeff: Coefficient = Coefficient(inp)
     def / (other: Coefficient): Coefficient = Coefficient(inp/other.value)
   }
 }

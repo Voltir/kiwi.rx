@@ -73,7 +73,7 @@ object BasicTests extends TestSuite {
       e() = 100
       assert(count == 5)
     }
-    
+
     'simpleNew {
       val solver = new Solver()
       val x = Var(0.0)

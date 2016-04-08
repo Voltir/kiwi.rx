@@ -8,6 +8,8 @@ val kiwirx = crossProject.settings(
   addCompilerPlugin("com.lihaoyi" %% "acyclic" % "0.1.4"),
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalarx" % "0.3.1",
+    "com.lihaoyi" %%% "sourcecode" % "0.1.1",
+    "com.lihaoyi" %%% "pprint" % "0.3.9",
     "com.lihaoyi" %%% "utest" % "0.3.1" % "test",
     "com.lihaoyi" %% "acyclic" % "0.1.4" % "provided"
   ),
