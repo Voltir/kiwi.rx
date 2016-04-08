@@ -2,22 +2,25 @@ package kiwirx2.internal
 
 import rx._
 
-class RxLatch(latchFunc: () => Unit)(implicit ctx: Ctx.Owner) {
+class VarLatch[T](latchFunc: Var[T] => Unit) { //(implicit ctx: Ctx.Owner) {
 
   private var ready: Boolean = false
 
-  private val _owner = Rx { () => () }
+  //private val _owner = Rx { () => () }
 
-  private val _obs = new Obs({() =>
+  private def _latch(t: Var[T]) = {
     if(ready) {
       ready = false
-      latchFunc()
+      latchFunc(t)
     }
-  },_owner)
+  }
 
-  def include(included: rx.Rx[_])(implicit ctx: Ctx.Owner): Unit = {
-    included.Internal.observers.add(_obs)
+  def include(included: rx.Var[T])(implicit ctx: Ctx.Owner): Unit = {
+    included.Internal.observers.add(new Obs({() =>
+      _latch(included)
+    }, included))
   }
 
   def reset(): Unit = ready = true
 }
+
