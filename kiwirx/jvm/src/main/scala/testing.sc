@@ -2,9 +2,9 @@ import kiwirx2.Coefficient
 import kiwirx2.implicits._
 import rx._
 import pprint.pprintln
-sealed trait Variable
 
-class Slack()(implicit name: sourcecode.Name) extends Variable {
+sealed trait SupportVariable
+class Slack()(implicit name: sourcecode.Name) extends SupportVariable {
   override def toString: String = name.value
 }
 
@@ -16,15 +16,16 @@ def please(chk: Boolean, msg: String)(implicit line: sourcecode.Line, file: sour
   if(!chk) throw new IllegalArgumentException(s"${file.value}(${line.value}): $msg")
 }
 
-
-
 //Represents: a*x1 + b*x2 ... c
-class Row {
+class Row()(implicit sc: sourcecode.Name) {
+
+  val name = sc.value
+
   var constant = Coefficient(0.0)
-  private val extraCells = mutable.AnyRefMap.empty[Variable,Coefficient]
+  private val extraCells = mutable.AnyRefMap.empty[SupportVariable,Coefficient]
   private val varCells = mutable.AnyRefMap.empty[Var[Double],Coefficient]
 
-  def solveFor(variable: Variable): Unit = {
+  def solveFor(variable: SupportVariable): Unit = {
     please(contains(variable), s"Invalid Variable! $variable")
     val coeff = -1.0 / extraCells(variable)
     constant *= coeff
@@ -43,7 +44,7 @@ class Row {
   }
 
   //in kiwi-java 'variable' can already be in the row - i might want that behavior?
-  def insert(variable: Variable, coefficient: Coefficient): Unit = {
+  def insert(variable: SupportVariable, coefficient: Coefficient): Unit = {
     please(!contains(variable), s"Repeat insert of $variable")
     please(!coefficient.nearZero,s"Can't insert a variable near zero! $variable")
     extraCells.put(variable,coefficient)
@@ -55,7 +56,7 @@ class Row {
     varCells.put(variable,coefficient)
   }
 
-  def contains(variable: Variable): Boolean = extraCells.contains(variable)
+  def contains(variable: SupportVariable): Boolean = extraCells.contains(variable)
 
   def contains(variable: Var[Double]): Boolean = varCells.contains(variable)
 
@@ -66,21 +67,13 @@ class Row {
   }
 
   def pivot: Option[Var[Double]] = {
-//    var best = Option.empty[Var[Double]]
-//    var bestWeight = Double.MaxValue
-//    varCells.filter(_._2.value < 0.0).foreach { case (a,b) =>
-//      println("??")
-//      val wurt = constant.value / b.value
-//      println(wurt)
-//      if(wurt > 0.0 && wurt < bestWeight) {
-//        best = Option(a)
-//        bestWeight = wurt
-//      }
-//    }
-//    best
     val negVars = varCells.filter(_._2.value < 0.0)
     if(negVars.isEmpty) None
     else Option(negVars.minBy(_._2.value)._1)
+  }
+
+  def pivotWeight(chk: Var[Double]): Double = {
+    varCells.get(chk).map(c => constant.value / c.value).getOrElse(Double.MaxValue)
   }
 
   override def toString: String = {
@@ -88,18 +81,18 @@ class Row {
     val names =
       (varCells.map(a => (a._1.toString,a._2)) ++
       extraCells.map(a => (a._1.toString,a._2))).toList
-    names.map(a => elem(a._1,a._2)).mkString("")
+    s"Row_$name(${names.map(a => elem(a._1,a._2)).mkString("")})"
   }
 }
 
 object Row {
-  def apply(coefficient: Coefficient)(args: (Var[Double],Coefficient) *): Row = {
+  def apply(coefficient: Coefficient)(args: (Var[Double],Coefficient) *)(implicit sc: sourcecode.Name): Row = {
     val row = new Row()
     args.foreach(a => row.insert(a._1,a._2))
     row
   }
 
-  def apply(args: (Var[Double],Coefficient) *): Row = {
+  def apply(args: (Var[Double],Coefficient) *)(implicit sc: sourcecode.Name): Row = {
     val row = new Row()
     args.foreach(a => row.insert(a._1,a._2))
     row
@@ -107,6 +100,17 @@ object Row {
 
   def pprint(rows: Row*): Unit = {
     pprintln(rows)
+  }
+
+  def pivot(variable: Var[Double], rows: Row *): Row = {
+    please(rows.nonEmpty, "Can't select pivot rows from an empty set!")
+    var best = rows.head
+    var bestWeight = best.pivotWeight(variable)
+    rows.foreach { row =>
+      val weight = row.pivotWeight(variable)
+      if(row.pivotWeight(variable) < bestWeight && weight > 0.0) { best = row; bestWeight = weight }
+    }
+    best
   }
 }
 
@@ -126,11 +130,21 @@ val p = Var(0.0)
 val s1 = new Slack
 val s2 = new Slack
 val objective = Row(a -> -7.0.coeff, b -> -8.0.coeff, c -> -10.0.coeff, p -> 1.0.coeff)
+println(objective)
+println(objective)
+println(objective)
+println(objective)
+println(objective)
 val r2 = Row(1000.0.coeff)(a -> 2.0.coeff, b -> 3.0.coeff, c -> 2.0.coeff)
 r2.insert(s1,1.0.coeff)
 val r3 = Row(800.0.coeff)(a -> 1.0.coeff, b -> 1.0.coeff, c -> 2.0.coeff)
 r3.insert(s2,1.0.coeff)
-
 Row.pprint(objective,r2,r3)
-
 println(objective.pivot)
+println(objective.pivot.map { p =>
+  println(p)
+  val pivRow = Row.pivot(p,r2,r3)
+  pivRow.solveFor(p)
+  pivRow.insert(p,1.0.coeff)
+  pivRow
+})
