@@ -1,4 +1,4 @@
-package cassowary.rx
+package rx.cassowary
 
 import scala.annotation.elidable
 import scala.annotation.elidable._

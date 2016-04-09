@@ -1,4 +1,4 @@
-package cassowary.rx.core
+package rx.cassowary.core
 
 case class Coefficient(value: Double) extends AnyVal {
   def *(other: Coefficient): Coefficient = Coefficient(value * other.value)

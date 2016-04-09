@@ -1,9 +1,9 @@
 package kiwirx2
 
-import cassowary.rx._
-import rx.Var
 import acyclic.file
-import cassowary.rx.core.{Coefficient, Row}
+import rx.Var
+import rx.cassowary.core.Coefficient
+import rx.cassowary.core.Row
 
 import scala.annotation.tailrec
 

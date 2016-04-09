@@ -1,7 +1,8 @@
 import scala.collection.mutable
 import kiwirx2._
-import cassowary.rx.core._
+import rx.cassowary.core._
 import rx._
+import rx.cassowary.core.{Row, Slack}
 
 
 val x1 = Var(0.0)

@@ -1,4 +1,4 @@
-package cassowary.rx.core
+package rx.cassowary.core
 
 sealed trait SimplexVariable
 
