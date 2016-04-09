@@ -1,7 +1,6 @@
 import scala.collection.mutable
-
 import kiwirx2._
-import kiwirx2.implicits._
+import cassowary.rx.core._
 import rx._
 
 

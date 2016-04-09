@@ -1,7 +1,7 @@
 package kiwirx
 
 import Symbolics._
-import kiwirx2.TestSolver1
+//import kiwirx2.TestSolver1
 import rx._
 import utest._
 import acyclic.file
@@ -107,20 +107,20 @@ object BasicTests extends TestSuite {
       debug()
     }
 
-    'hacky {
-      val wurt = new TestSolver1
-      val x = Var(0.0)
-      val y = Var(18.0)
-      def debug() = println(s"$x $y (${x.now * 2} == ${y.now})?")
-      wurt.addConstraintTest(x,y)
-      debug()
-      x() = 21
-      debug()
-      x() = 10
-      debug()
-      x() = 50
-      debug()
-    }
+//    'hacky {
+//      val wurt = new TestSolver1
+//      val x = Var(0.0)
+//      val y = Var(18.0)
+//      def debug() = println(s"$x $y (${x.now * 2} == ${y.now})?")
+//      wurt.addConstraintTest(x,y)
+//      debug()
+//      x() = 21
+//      debug()
+//      x() = 10
+//      debug()
+//      x() = 50
+//      debug()
+//    }
 
     'ge0 {
       val solver = new Solver()
